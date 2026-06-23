@@ -1,0 +1,35 @@
+{
+  "name": "@hinkal/wdk-wallet-solana-hinkal",
+  "version": "1.0.0-beta.1",
+  "description": "WDK community module adding Hinkal private transfers to Solana wallet accounts.",
+  "keywords": ["wdk", "wallet", "solana", "hinkal", "privacy"],
+  "license": "Apache-2.0",
+  "main": "index.js",
+  "type": "module",
+  "types": "./types",
+  "scripts": {
+    "build:types": "tsc",
+    "lint": "standard",
+    "lint:fix": "standard --fix"
+  },
+  "dependencies": {
+    "@hinkal/common": "^0.2.36",
+    "@solana/web3.js": "^1.98.0",
+    "@tetherto/wdk-wallet-solana": "^1.0.0-beta.10",
+    "tweetnacl": "^1.0.3",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "standard": "^17.1.2",
+    "typescript": "^5.8.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./index.js"
+    },
+    "./package": {
+      "default": "./package.json"
+    }
+  }
+}
