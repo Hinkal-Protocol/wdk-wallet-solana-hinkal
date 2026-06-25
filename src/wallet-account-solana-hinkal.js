@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-'use strict'
+"use strict";
 
-import { Keypair, PublicKey } from '@solana/web3.js'
-import nacl from 'tweetnacl'
+import { Keypair, PublicKey } from "@solana/web3.js";
+import nacl from "tweetnacl";
 
-import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
+import { WalletAccountSolana } from "@tetherto/wdk-wallet-solana";
 import {
   getERC20Token,
   currentSolanaChainId,
   getCurrentTimeInSeconds,
   getFeeStructure,
   ExternalActionId,
-  HINKAL_PRIVATE_SEND_VARIABLE_RATE
-} from '@hinkal/common'
-import { prepareSolanaHinkal } from '@hinkal/common/providers/prepareSolanaHinkal'
+  HINKAL_PRIVATE_SEND_VARIABLE_RATE,
+} from "@hinkal/common";
+import { prepareSolanaHinkal } from "@hinkal/common/providers/prepareSolanaHinkal";
 
 /** @typedef {import('@tetherto/wdk-wallet').TransferOptions} TransferOptions */
 
@@ -36,7 +36,7 @@ import { prepareSolanaHinkal } from '@hinkal/common/providers/prepareSolanaHinka
  * @property {bigint} balance - The recoverable shielded balance, in base units.
  */
 
-const DEFAULT_NULLIFIER_COUNT = 2
+const DEFAULT_NULLIFIER_COUNT = 1;
 
 /**
  * A Solana wallet account with Hinkal private-transfer support.
@@ -52,38 +52,43 @@ export default class WalletAccountSolanaHinkal extends WalletAccountSolana {
    * @returns {Promise<import('@hinkal/common').Hinkal<unknown>>} The initialized Hinkal session.
    * @throws {Error} If the wallet account has been disposed.
    */
-  async _prepareSession () {
+  async _prepareSession() {
     if (!this._rawPrivateKey) {
-      throw new Error('The wallet account has been disposed.')
+      throw new Error("The wallet account has been disposed.");
     }
 
-    const secretKey = nacl.sign.keyPair.fromSeed(this._rawPrivateKey).secretKey
-    const keypair = Keypair.fromSecretKey(secretKey)
+    const secretKey = nacl.sign.keyPair.fromSeed(this._rawPrivateKey).secretKey;
+    const keypair = Keypair.fromSecretKey(secretKey);
 
     const signTx = (tx) => {
-      if (typeof tx.partialSign === 'function') {
-        tx.partialSign(keypair)
+      if (typeof tx.partialSign === "function") {
+        tx.partialSign(keypair);
       } else {
-        tx.sign([keypair])
+        tx.sign([keypair]);
       }
-      return tx
-    }
+      return tx;
+    };
 
     const solanaWallet = {
       publicKey: keypair.publicKey,
-      async signTransaction (tx) { return signTx(tx) },
-      async signAllTransactions (txs) { return txs.map(signTx) },
-      async signMessage (message) {
+      async signTransaction(tx) {
+        return signTx(tx);
+      },
+      async signAllTransactions(txs) {
+        return txs.map(signTx);
+      },
+      async signMessage(message) {
         return {
           signature: nacl.sign.detached(message, keypair.secretKey),
-          publicKey: keypair.publicKey
-        }
-      }
-    }
+          publicKey: keypair.publicKey,
+        };
+      },
+    };
 
-    const hinkal = await prepareSolanaHinkal(solanaWallet)
-    hinkal.solanaProviderAdapter.ethereumAddress = hinkal.userKeys.getDerivedEthereumAddress()
-    return hinkal
+    const hinkal = await prepareSolanaHinkal(solanaWallet);
+    hinkal.solanaProviderAdapter.ethereumAddress =
+      hinkal.userKeys.getDerivedEthereumAddress();
+    return hinkal;
   }
 
   /**
@@ -95,13 +100,15 @@ export default class WalletAccountSolanaHinkal extends WalletAccountSolana {
    * @throws {Error} If the wallet account has been disposed.
    * @throws {Error} If the token is not supported by Hinkal on the current chain.
    */
-  async _prepareHinkal (token) {
-    const erc20Token = getERC20Token(token, currentSolanaChainId)
+  async _prepareHinkal(token) {
+    const erc20Token = getERC20Token(token, currentSolanaChainId);
     if (!erc20Token) {
-      throw new Error(`The token ${token} is not supported by Hinkal on chain ${currentSolanaChainId}.`)
+      throw new Error(
+        `The token ${token} is not supported by Hinkal on chain ${currentSolanaChainId}.`,
+      );
     }
-    const hinkal = await this._prepareSession()
-    return { hinkal, erc20Token }
+    const hinkal = await this._prepareSession();
+    return { hinkal, erc20Token };
   }
 
   /**
@@ -114,17 +121,17 @@ export default class WalletAccountSolanaHinkal extends WalletAccountSolana {
    * @throws {Error} If the wallet account has been disposed.
    * @throws {Error} If the token is not supported by Hinkal on the current chain.
    */
-  async privateSend ({ token, recipient, amount }) {
+  async privateSend({ token, recipient, amount }) {
     try {
-      new PublicKey(recipient)
+      new PublicKey(recipient);
     } catch {
-      throw new Error('Invalid Solana recipient address.')
+      throw new Error("Invalid Solana recipient address.");
     }
-    const parsedAmount = BigInt(amount)
+    const parsedAmount = BigInt(amount);
     if (parsedAmount <= 0n) {
-      throw new Error('Amount must be positive.')
+      throw new Error("Amount must be positive.");
     }
-    const { hinkal, erc20Token } = await this._prepareHinkal(token)
+    const { hinkal, erc20Token } = await this._prepareHinkal(token);
 
     const feeStructure = await getFeeStructure(
       currentSolanaChainId,
@@ -133,17 +140,21 @@ export default class WalletAccountSolanaHinkal extends WalletAccountSolana {
       ExternalActionId.Transact,
       [],
       HINKAL_PRIVATE_SEND_VARIABLE_RATE,
-      { mintTo: erc20Token.erc20TokenAddress, recipient, nullifierCount: DEFAULT_NULLIFIER_COUNT }
-    )
+      {
+        mintTo: erc20Token.erc20TokenAddress,
+        recipient,
+        nullifierCount: DEFAULT_NULLIFIER_COUNT,
+      },
+    );
 
     const hash = await hinkal.depositAndWithdraw(
       erc20Token,
       [parsedAmount],
       [recipient],
       getCurrentTimeInSeconds(),
-      feeStructure
-    )
-    return { hash }
+      feeStructure,
+    );
+    return { hash };
   }
 
   /**
@@ -154,11 +165,11 @@ export default class WalletAccountSolanaHinkal extends WalletAccountSolana {
    * @throws {Error} If the wallet account has been disposed.
    * @throws {Error} If the token is not supported by Hinkal on the current chain.
    */
-  async withdrawStuckUtxos ({ token }) {
-    const { hinkal, erc20Token } = await this._prepareHinkal(token)
-    const recipient = await this.getAddress()
-    const hashes = await hinkal.withdrawStuckUtxos(erc20Token, recipient)
-    return { hashes }
+  async withdrawStuckUtxos({ token }) {
+    const { hinkal, erc20Token } = await this._prepareHinkal(token);
+    const recipient = await this.getAddress();
+    const hashes = await hinkal.withdrawStuckUtxos(erc20Token, recipient);
+    return { hashes };
   }
 
   /**
@@ -167,9 +178,13 @@ export default class WalletAccountSolanaHinkal extends WalletAccountSolana {
    * @returns {Promise<StuckUtxoBalance[]>} The stuck balance per token.
    * @throws {Error} If the wallet account has been disposed.
    */
-  async stuckUtxoBalances () {
-    const hinkal = await this._prepareSession()
-    const balances = await hinkal.getStuckShieldedBalances(currentSolanaChainId)
-    return balances.map(({ token, balance }) => ({ token: token.erc20TokenAddress, balance }))
+  async stuckUtxoBalances() {
+    const hinkal = await this._prepareSession();
+    const balances =
+      await hinkal.getStuckShieldedBalances(currentSolanaChainId);
+    return balances.map(({ token, balance }) => ({
+      token: token.erc20TokenAddress,
+      balance,
+    }));
   }
 }
