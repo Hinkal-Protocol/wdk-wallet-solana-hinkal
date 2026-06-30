@@ -1,14 +1,14 @@
-# wdk-wallet-solana-hinkal
+# @hinkal/wdk-wallet-solana-hinkal
 
-A [WDK](https://docs.wdk.tether.io) community wallet module that adds [Hinkal](https://hinkal.pro)
-private transfers to Solana wallet accounts.
+Adds [Hinkal] private transfer support to Solana wallets built with [WDK](https://docs.wdk.tether.io).
 
-It extends [`@tetherto/wdk-wallet-solana`](https://www.npmjs.com/package/@tetherto/wdk-wallet-solana),
-so every standard account method keeps working and three Hinkal methods are added on top:
+Hinkal is a privacy protocol that shields token transfers on-chain. This package wraps `@tetherto/wdk-wallet-solana` and adds three methods to every account:
 
-- `privateSend` — shielded deposit and scheduled withdrawal to a recipient in a single call.
-- `withdrawStuckUtxos` — recover stranded shielded UTXOs back to your own address.
-- `stuckUtxoBalances` — list recoverable shielded balances per token.
+- **`privateSend`** — send tokens to any address privately. The transfer is shielded through Hinkal so the link between sender and recipient is hidden on-chain.
+- **`withdrawStuckUtxos`** — recover any shielded balances that got stuck in Hinkal back to your own address.
+- **`stuckUtxoBalances`** — check how much shielded balance is recoverable per token.
+
+All existing WDK wallet methods work unchanged.
 
 ## Installation
 
@@ -16,47 +16,25 @@ so every standard account method keeps working and three Hinkal methods are adde
 npm install @hinkal/wdk-wallet-solana-hinkal
 ```
 
-> **Note:** This module depends on `@hinkal/common`, which is distributed for bundled
-> environments. Use it through a bundler (Vite, webpack, React Native / Metro, or bare) rather
-> than plain Node.js ESM.
-
 ## Usage
 
 ```js
-import WalletManagerSolanaHinkal from '@hinkal/wdk-wallet-solana-hinkal'
+import WalletManagerSolanaHinkal from "@hinkal/wdk-wallet-solana-hinkal";
 
-const wallet = new WalletManagerSolanaHinkal(seed, { provider: 'https://api.mainnet-beta.solana.com' })
-const account = await wallet.getAccount(0)
+const wallet = new WalletManagerSolanaHinkal(seed, {
+  provider: "https://api.mainnet-beta.solana.com",
+});
+const account = await wallet.getAccount(0);
 
-// Send 1 USDC privately through Hinkal.
+// Send tokens privately through Hinkal
 const { hash } = await account.privateSend({
-  token: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-  recipient: '...', // base58 Solana address
-  amount: 1_000_000n
-})
-
-// Inspect and recover stuck shielded balances.
-const balances = await account.stuckUtxoBalances()
-if (balances.length > 0) {
-  await account.withdrawStuckUtxos({ token: balances[0].token })
-}
+  token: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC on Solana
+  recipient: "...", // base58 Solana address
+  amount: 1_000_000n, // 1 USDC in base units
+});
 ```
 
-## API
-
-### `account.privateSend({ token, recipient, amount }) => Promise<{ hash }>`
-
-Privately transfers `amount` (base units) of `token` to a base58 `recipient` via Hinkal's
-`depositAndWithdraw`. Throws if the recipient is not a valid Solana address, the amount is not
-positive, or the token is unsupported.
-
-### `account.withdrawStuckUtxos({ token }) => Promise<{ hashes }>`
-
-Recovers stranded shielded UTXOs of `token` back to the account's own address.
-
-### `account.stuckUtxoBalances() => Promise<Array<{ token, balance }>>`
-
-Returns the recoverable shielded balance per token. An empty array means nothing is stuck.
+> Requires a bundler (Vite, webpack, Metro, or bare) — `@hinkal/common` is not plain Node.js ESM compatible.
 
 ## License
 
