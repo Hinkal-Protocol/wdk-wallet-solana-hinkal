@@ -13,13 +13,13 @@ All existing WDK wallet methods work unchanged.
 ## Installation
 
 ```sh
-npm install @hinkal/wdk-wallet-solana-hinkal
+npm install @hinkal-wdk-modules/wdk-wallet-solana-hinkal
 ```
 
 ## Usage
 
 ```js
-import WalletManagerSolanaHinkal from "@hinkal/wdk-wallet-solana-hinkal";
+import WalletManagerSolanaHinkal from "@hinkal-wdk-modules/wdk-wallet-solana-hinkal";
 
 const wallet = new WalletManagerSolanaHinkal(seed, {
   provider: "https://api.mainnet-beta.solana.com",
